@@ -1,0 +1,23 @@
+services:
+  reader:
+    image: ghcr.io/davralin/photoline-cdrom-reader:1.0.0
+    command:
+      - -data
+      - /data
+      - -addr
+      - 0.0.0.0:8080
+      - -allow-non-loopback
+      - -no-browser
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - type: bind
+        source: ${PHOTOLINE_DATA_DIR:?Set PHOTOLINE_DATA_DIR to the external catalog data directory}
+        target: /data
+        read_only: true
+    user: "${PHOTOLINE_UID:-65532}:${PHOTOLINE_GID:-65532}"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

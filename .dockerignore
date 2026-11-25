@@ -1,0 +1,15 @@
+.git
+.github
+2004/
+iso/
+data/
+*.aaruf
+*.iso
+*.LST
+*.jpg
+*.db
+dist/
+docs/screenshot-synthetic.png
+tools/screenshot.Dockerfile
+tools/capture-screenshot.sh
+tools/generate-demo-data.py

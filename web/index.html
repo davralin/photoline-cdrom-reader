@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>PhotoLine CD-ROM Reader</title>
+  <style>
+    :root { color-scheme: light; --ink:#202a35; --muted:#647181; --line:#dce2e8; --paper:#fff; --canvas:#f3f6f8; --accent:#126b75; --accent-soft:#e5f2f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { position:sticky; top:0; z-index:2; padding:18px clamp(16px,4vw,42px); background:#143b46; color:white; box-shadow:0 2px 8px #132b3430; }
+    header h1 { margin:0; font-size:1.3rem; letter-spacing:.01em; }
+    header p { margin:3px 0 0; color:#c4dadd; font-size:.9rem; }
+    main { display:grid; grid-template-columns:minmax(280px,380px) minmax(0,1fr); gap:18px; padding:18px clamp(12px,3vw,32px); max-width:1500px; margin:auto; }
+    .panel { min-width:0; background:var(--paper); border:1px solid var(--line); border-radius:12px; box-shadow:0 2px 8px #162a3510; }
+    .sidebar { max-height:calc(100vh - 124px); overflow:auto; }
+    .section-head { position:sticky; top:0; z-index:1; background:white; padding:15px 16px 12px; border-bottom:1px solid var(--line); border-radius:12px 12px 0 0; }
+    .section-head h2 { font-size:1rem; margin:0 0 9px; }
+    input[type=search] { width:100%; padding:10px 12px; font:inherit; border:1px solid #b8c5cf; border-radius:8px; outline:none; }
+    input:focus { border-color:var(--accent); box-shadow:0 0 0 3px #126b7520; }
+    #search-status { color:var(--muted); min-height:1.4em; margin-top:6px; font-size:.82rem; }
+    #tree { padding:8px 12px 14px; }
+    details { margin:3px 0; }
+    summary { cursor:pointer; padding:5px 4px; border-radius:6px; }
+    summary:hover, .tree-button:hover { background:var(--accent-soft); }
+    .school-list { padding-left:14px; }
+    .class-list { padding:2px 0 5px 16px; display:grid; gap:2px; }
+    .tree-button { width:100%; text-align:left; border:0; background:transparent; color:inherit; padding:5px 7px; border-radius:6px; font:inherit; cursor:pointer; }
+    .tree-button small { color:var(--muted); }
+    #search-results { display:grid; gap:4px; max-height:40vh; overflow:auto; margin-top:8px; }
+    .result { padding:8px; border:1px solid var(--line); border-radius:7px; background:white; text-align:left; cursor:pointer; }
+    .result:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .result strong { display:block; font-weight:650; }
+    .result span { color:var(--muted); font-size:.84rem; }
+    .content { min-height:62vh; padding:clamp(18px,3vw,34px); }
+    .welcome h2 { margin:.1em 0 .25em; font-size:1.6rem; }
+    .welcome p { color:var(--muted); max-width:62ch; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:10px; margin:22px 0; }
+    .stat { border:1px solid var(--line); border-radius:9px; padding:12px; background:#fbfcfd; }
+    .stat b { display:block; font-size:1.35rem; }
+    .stat span { color:var(--muted); font-size:.82rem; }
+    .crumb { color:var(--muted); font-size:.9rem; margin-bottom:8px; }
+    .detail-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:22px; align-items:start; margin-top:18px; }
+    .photo { width:100%; max-height:70vh; aspect-ratio:3/2; object-fit:contain; background:#edf1f4; border-radius:9px; border:1px solid var(--line); }
+    .no-photo { aspect-ratio:3/2; display:grid; place-items:center; color:var(--muted); border:1px dashed #a9b6c0; border-radius:9px; padding:20px; text-align:center; }
+    .people { border-collapse:collapse; width:100%; }
+    .people th,.people td { text-align:left; vertical-align:top; padding:8px 7px; border-bottom:1px solid var(--line); }
+    .people th { font-size:.82rem; color:var(--muted); }
+    .people-wrap { max-height:65vh; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+    .empty { color:var(--muted); padding:14px 4px; }
+    .notice { color:var(--muted); font-size:.84rem; margin-top:22px; }
+    footer { max-width:1500px; margin:0 auto 20px; padding:0 clamp(16px,3vw,32px); color:var(--muted); font-size:.82rem; }
+    footer a { color:var(--accent); }
+    @media(max-width:850px) { main { grid-template-columns:1fr; } .sidebar { max-height:48vh; } .content { min-height:45vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PhotoLine CD-ROM Reader</h1>
+    <p>Offline catalog browser · data stays on this computer</p>
+  </header>
+  <main>
+    <aside class="panel sidebar">
+      <div class="section-head">
+        <h2>Search the entire catalog</h2>
+        <input id="search" type="search" placeholder="County, school, class, person…" autocomplete="off">
+        <div id="search-status" aria-live="polite"></div>
+        <div id="search-results"></div>
+      </div>
+      <nav id="tree" aria-label="County, school, and class catalog"></nav>
+    </aside>
+    <section id="content" class="panel content" aria-live="polite">
+      <div class="welcome"><h2>Loading catalog…</h2></div>
+    </section>
+  </main>
+  <footer>Licensed under GNU GPL version 3 · Provided without warranty · <a href="/license" target="_blank" rel="noreferrer">View license</a></footer>
+  <script>
+    const treeRoot = document.querySelector('#tree');
+    const content = document.querySelector('#content');
+    const searchBox = document.querySelector('#search');
+    const searchResults = document.querySelector('#search-results');
+    const searchStatus = document.querySelector('#search-status');
+    let catalogTree;
+    let searchTimer;
+    let searchRequestID = 0;
+
+    function element(tag, text, className) {
+      const node = document.createElement(tag);
+      if (text !== undefined) node.textContent = text;
+      if (className) node.className = className;
+      return node;
+    }
+    function addStats(summary) {
+      const stats = element('div', undefined, 'stats');
+      for (const [label, value] of [
+        ['Counties', summary.countyCount], ['Schools', summary.schoolCount],
+        ['Classes', summary.classCount], ['People', summary.peopleCount.toLocaleString()],
+        ['Class photos', summary.photoMatches.toLocaleString()]
+      ]) {
+        const card = element('div', undefined, 'stat');
+        card.append(element('b', String(value)), element('span', label));
+        stats.append(card);
+      }
+      return stats;
+    }
+    function showWelcome(summary) {
+      content.replaceChildren();
+      const welcome = element('div', undefined, 'welcome');
+      welcome.append(element('h2', 'Browse the catalog'), element('p', 'Choose a county, school, and class from the tree, or search across the full catalog. Select a class to view its photo and people list.'), addStats(summary));
+      welcome.append(element('p', 'The catalog is read locally from the 2004 data folder. The viewer binds only to this computer.'));
+      content.append(welcome);
+    }
+    function addTree() {
+      treeRoot.replaceChildren();
+      for (const county of catalogTree.counties) {
+        const countyDetails = element('details');
+        countyDetails.dataset.countyId = county.id;
+        countyDetails.append(element('summary', `${county.name} (${county.schools.length} schools)`));
+        const schoolList = element('div', undefined, 'school-list');
+        for (const school of county.schools) {
+          const schoolDetails = element('details');
+          schoolDetails.dataset.schoolId = school.id;
+          schoolDetails.append(element('summary', `${school.name} (${school.classes.length} classes)`));
+          const classList = element('div', undefined, 'class-list');
+          for (const cls of school.classes) {
+            const button = element('button', undefined, 'tree-button');
+            button.type = 'button';
+            button.dataset.classId = cls.id;
+            button.append(document.createTextNode(`${cls.name} `));
+            button.append(element('small', `(${cls.personCount})`));
+            button.addEventListener('click', () => showClass(cls.id));
+            classList.append(button);
+          }
+          schoolDetails.append(classList);
+          schoolList.append(schoolDetails);
+        }
+        countyDetails.append(schoolList);
+        treeRoot.append(countyDetails);
+      }
+    }
+    async function showClass(id) {
+      content.replaceChildren(element('p', 'Loading class…', 'empty'));
+      try {
+        const response = await fetch(`/api/class?id=${encodeURIComponent(id)}`);
+        if (!response.ok) throw new Error('Could not load class');
+        const data = await response.json();
+        content.replaceChildren();
+        content.append(element('div', `${data.county} / ${data.school}`, 'crumb'));
+        content.append(element('h2', data.name));
+        const grid = element('div', undefined, 'detail-grid');
+        const media = element('div');
+        if (data.photoAvailable) {
+          const photo = element('img', undefined, 'photo');
+          photo.src = `/photo?id=${encodeURIComponent(id)}`;
+          photo.alt = `Class photo for ${data.name}`;
+          media.append(photo);
+        } else {
+          media.append(element('div', 'No matching class photo was found in Pictures.', 'no-photo'));
+        }
+        const people = element('div');
+        people.append(element('h3', `People (${data.people.length.toLocaleString()})`));
+        if (data.people.length) {
+          const wrap = element('div', undefined, 'people-wrap');
+          const table = element('table', undefined, 'people');
+          const head = element('thead');
+          const row = element('tr');
+          row.append(element('th', 'Name'), element('th', 'Position'));
+          head.append(row);
+          const body = element('tbody');
+          for (const person of data.people) {
+            const tr = element('tr');
+            tr.append(element('td', person.name), element('td', person.position));
+            body.append(tr);
+          }
+          table.append(head, body);
+          wrap.append(table);
+          people.append(wrap);
+        } else {
+          people.append(element('p', 'No person records are attached to this class.', 'empty'));
+        }
+        grid.append(media, people);
+        content.append(grid);
+      } catch (error) {
+        content.replaceChildren(element('p', error.message, 'empty'));
+      }
+    }
+    function scrollToResult(result) {
+      if (result.classId >= 0) {
+        showClass(result.classId);
+        return;
+      }
+      if (result.countyId >= 0) {
+        const county = treeRoot.querySelector(`[data-county-id="${result.countyId}"]`);
+        if (county) {
+          county.open = true;
+          county.scrollIntoView({block:'center', behavior:'smooth'});
+        }
+      }
+      if (result.schoolId >= 0) {
+        const school = treeRoot.querySelector(`[data-school-id="${result.schoolId}"]`);
+        if (school) { school.open = true; school.scrollIntoView({block:'center', behavior:'smooth'}); }
+      }
+    }
+    async function search(query) {
+      const requestID = ++searchRequestID;
+      searchResults.replaceChildren();
+      if (query.trim().length < 2) { searchStatus.textContent = ''; return; }
+      searchStatus.textContent = 'Searching…';
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        if (requestID !== searchRequestID) return;
+        const matchLabel = data.similar ? 'similar matches · no exact matches' : 'matches';
+        searchStatus.textContent = data.total ? `${data.total.toLocaleString()} ${matchLabel}${data.total > data.results.length ? ` · showing first ${data.results.length}` : ''}` : 'No matches';
+        for (const result of data.results) {
+          const button = element('button', undefined, 'result');
+          button.type = 'button';
+          button.append(element('strong', `${result.kind}: ${result.label}`));
+          if (result.detail) button.append(element('span', result.detail));
+          button.addEventListener('click', () => scrollToResult(result));
+          searchResults.append(button);
+        }
+      } catch (_) {
+        if (requestID === searchRequestID) searchStatus.textContent = 'Search failed';
+      }
+    }
+    searchBox.addEventListener('input', () => {
+      searchRequestID++;
+      clearTimeout(searchTimer);
+      const query = searchBox.value;
+      searchTimer = setTimeout(() => search(query), 220);
+    });
+    fetch('/api/tree').then(r => { if (!r.ok) throw new Error('Catalog could not be loaded'); return r.json(); }).then(data => {
+      catalogTree = data;
+      addTree();
+      const requestedClass = new URLSearchParams(location.search).get('class');
+      const classID = requestedClass !== null && /^\d+$/.test(requestedClass) ? Number(requestedClass) : -1;
+      if (classID >= 0 && classID < data.summary.classCount) {
+        const classButton = treeRoot.querySelector(`[data-class-id="${classID}"]`);
+        if (classButton) {
+          classButton.closest('[data-school-id]').open = true;
+          classButton.closest('[data-county-id]').open = true;
+        }
+        showClass(classID);
+      } else {
+        showWelcome(data.summary);
+      }
+    }).catch(error => content.replaceChildren(element('p', error.message, 'empty')));
+  </script>
+</body>
+</html>
