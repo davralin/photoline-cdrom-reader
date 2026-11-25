@@ -4,6 +4,8 @@ A standalone, read-only viewer for a locally held PhotoLine school-photo catalog
 
 > **The catalog is not included.** This repository, its releases, the container image, and the screenshot contain software and synthetic demonstration material only. They do not contain the disc image, catalog database, original executable, or photographs. The screenshot uses invented sample labels and an illustration, not material from the disc. You must supply your own lawful local copy of the catalog. Consider copyright, database rights, and privacy before sharing catalog data or screenshots.
 
+![Synthetic sample of the reader showing an invented class picture and sample people list](docs/screenshot-synthetic.png)
+
 ## Features
 
 - Browse county → school → class and view the people list beneath the class picture.
