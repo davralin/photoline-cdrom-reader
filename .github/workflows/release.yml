@@ -9,20 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Test source and Windows test cross-build in Go container
-        run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/src:ro" \
-            -w /src \
-            golang:1.27.4 \
-            sh -ec 'export GOFLAGS=-buildvcs=false; go test ./... && go vet ./... && GOOS=windows GOARCH=amd64 go test -c -o /tmp/reader-tests.exe'
+  ci:
+    name: CI checks
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
 
   binaries:
-    needs: verify
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -46,7 +40,7 @@ jobs:
           retention-days: 7
 
   container:
-    needs: verify
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: read

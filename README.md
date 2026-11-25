@@ -47,6 +47,10 @@ Open <http://127.0.0.1:8080/>. Compose mounts the data read-only, makes the cont
 
 The Compose file does not copy or download catalog data. Keep the data outside this software repository.
 
+## Automated dependency updates
+
+The installed Renovate GitHub App reads [`renovate.json`](renovate.json), checks for updates monthly, and groups them into one pull request. Automerge is enabled for all update types; Renovate merges only after the PR's CI checks pass. No self-hosted Renovate workflow or repository token is needed.
+
 ## Build and test in a container
 
 The release workflow builds and tests using the current Go toolchain in a disposable container. To run the Go tests and vet locally without installing Go on the host:
